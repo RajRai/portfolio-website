@@ -1,5 +1,14 @@
 export const projects = [
     {
+        id: "statio",
+        title: "StatIO",
+        tagline: "Customizable infrastructure monitoring.",
+        tags: ["React", "Node.js", "Infrastructure", "Visualisation"],
+        links: [
+            {label: "Visit", href: "https://statio.net"},
+        ],
+    },
+    {
         id: "portfolio-analyzer-client",
         title: "Portfolio Analyzer",
         tagline: "Interactive portfolio tracking and analytics for personal investing.",
@@ -43,7 +52,7 @@ export const projects = [
         id: "webdev-portfolio-website",
         title: "Web Dev Portfolio",
         tagline: "The source for this website.",
-        tags: ["React", "MUI", "Express"],
+        tags: ["React", "MUI", "Node.js"],
         links: [
             {label: "GitHub", href: "https://github.com/rajrai/portfolio-website"},
         ],
