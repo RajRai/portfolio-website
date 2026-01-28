@@ -1,9 +1,9 @@
 # ---- build client ----
 FROM node:20-bookworm-slim AS client-build
 WORKDIR /app
-COPY package.json package-lock.json* ./
-COPY client/package.json client/package-lock.json* ./client/
-COPY server/package.json server/package-lock.json* ./server/
+COPY package.json ./
+COPY client/package.json ./client/
+COPY server/package.json ./server/
 # install workspace deps
 RUN npm install
 COPY client ./client
@@ -12,9 +12,9 @@ RUN npm --workspace client run build
 # ---- build server deps ----
 FROM node:20-bookworm-slim AS server-deps
 WORKDIR /app
-COPY package.json package-lock.json* ./
-COPY client/package.json client/package-lock.json* ./client/
-COPY server/package.json server/package-lock.json* ./server/
+COPY package.json ./
+COPY client/package.json ./client/
+COPY server/package.json ./server/
 # better-sqlite3 needs build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ \

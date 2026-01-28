@@ -18,7 +18,7 @@
     "docker:build": "docker build -t docker.rajrai.net/portfolio-website:latest .",
     "docker:push": "docker push docker.rajrai.net/portfolio-website:latest",
     "docker:publish": "npm run docker:build && npm run docker:push",
-    "docker:start": "docker run --rm -p 5174:5174 -e ADMIN_KEY=change-me -e IP_HASH_SALT=change-me-too -e PORT=5174 -e DEV_CLIENT_ORIGIN=http://localhost:5173 docker.rajrai.net/portfolio-website:latest"
+    "docker:start": "docker rm -f portfolio-website && docker run --name portfolio-website -p 5174:5174 -e ADMIN_KEY=change-me -e IP_HASH_SALT=change-me-too -e PORT=5174 -e DEV_CLIENT_ORIGIN=http://localhost:5173 docker.rajrai.net/portfolio-website:latest"
   },
   "devDependencies": {
     "concurrently": "^9.0.0",
