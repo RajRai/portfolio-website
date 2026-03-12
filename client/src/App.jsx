@@ -12,6 +12,8 @@ import {
     Divider,
     IconButton,
     Link,
+    Menu,
+    MenuItem,
     Stack,
     TextField,
     Toolbar,
@@ -22,6 +24,7 @@ import {
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import DescriptionIcon from "@mui/icons-material/Description";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import {config, projects} from "./config";
 import {fetchNotes, submitNote} from "./api";
@@ -111,22 +114,39 @@ export default function App() {
                 }}
             >
                 <Toolbar>
-                    <Container maxWidth="lg" sx={{display: "flex", alignItems: "center", gap: 2}}>
+                    <Container
+                        maxWidth="lg"
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: {xs: 1, sm: 2},
+                        }}
+                    >
                         <TextField
                             size="small"
                             placeholder="Search projects…"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            sx={{width: 300}}
+                            sx={{
+                                width: {xs: "auto", sm: 300},
+                                flex: 1,
+                                minWidth: 0,
+                            }}
                         />
 
-                        <Box sx={{flex: 1}}>
-                        </Box>
-
-                        <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Stack
+                            direction="row"
+                            spacing={0.5}
+                            alignItems="center"
+                            sx={{
+                                justifyContent: "flex-end",
+                                flexShrink: 0,
+                            }}
+                        >
                             {!!config.linkedin && (
                                 <Tooltip title="LinkedIn">
                                     <IconButton
+                                        sx={{display: {xs: "none", sm: "inline-flex"}}}
                                         component="a"
                                         href={config.linkedin}
                                         target="_blank"
@@ -142,6 +162,7 @@ export default function App() {
                             {!!config.github && (
                                 <Tooltip title="GitHub">
                                     <IconButton
+                                        sx={{display: {xs: "none", sm: "inline-flex"}}}
                                         component="a"
                                         href={config.github}
                                         target="_blank"
@@ -157,6 +178,7 @@ export default function App() {
                             {!!config.resume && (
                                 <Tooltip title="Resume">
                                     <IconButton
+                                        sx={{display: {xs: "none", sm: "inline-flex"}}}
                                         component="a"
                                         href={config.resume}
                                         target="_blank"
@@ -169,8 +191,14 @@ export default function App() {
                                 </Tooltip>
                             )}
 
-                            <ThemeSelector id="topbar" />
-                            <NewThemeButton />
+                            <Box sx={{display: {xs: "none", sm: "flex"}, alignItems: "center", gap: 0.5}}>
+                                <ThemeSelector id="topbar" />
+                                <NewThemeButton />
+                            </Box>
+
+                            <Box sx={{display: {xs: "flex", sm: "none"}}}>
+                                <MobileMenu />
+                            </Box>
                         </Stack>
                     </Container>
                 </Toolbar>
@@ -341,5 +369,100 @@ export default function App() {
                 </Container>
             </Box>
         </Box>
+    );
+}
+
+function MobileMenu() {
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+
+    return (
+        <>
+            <IconButton
+                color="inherit"
+                size="small"
+                aria-label="Open theme menu"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+            >
+                <MoreVertIcon />
+            </IconButton>
+            <Menu
+                anchorEl={anchorEl}
+                open={open}
+                onClose={() => setAnchorEl(null)}
+                transformOrigin={{horizontal: "right", vertical: "top"}}
+                anchorOrigin={{horizontal: "right", vertical: "bottom"}}
+                PaperProps={{
+                    sx: {
+                        minWidth: 220,
+                        px: 0.5,
+                        pt: 0.5,
+                        pb: 0.75,
+                    },
+                }}
+            >
+                <MenuItem disableGutters sx={{px: 1, py: 1}}>
+                    <ThemeSelector
+                        id="topbar-mobile"
+                        selectProps={{
+                            size: "small",
+                            variant: "outlined",
+                            sx: {minWidth: 140},
+                        }}
+                    />
+                </MenuItem>
+                <MenuItem
+                    onClick={() => setAnchorEl(null)}
+                    disableGutters
+                    sx={{px: 1, py: 0.75}}
+                >
+                    <NewThemeButton
+                        buttonProps={{
+                            color: "inherit",
+                            size: "small",
+                        }}
+                    />
+                </MenuItem>
+                {!!config.linkedin && (
+                    <MenuItem
+                        component="a"
+                        href={config.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        disableGutters
+                        sx={{px: 1, py: 0.75, gap: 1}}
+                    >
+                        <LinkedInIcon fontSize="small" />
+                        LinkedIn
+                    </MenuItem>
+                )}
+                {!!config.github && (
+                    <MenuItem
+                        component="a"
+                        href={config.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        disableGutters
+                        sx={{px: 1, py: 0.75, gap: 1}}
+                    >
+                        <GitHubIcon fontSize="small" />
+                        GitHub
+                    </MenuItem>
+                )}
+                {!!config.resume && (
+                    <MenuItem
+                        component="a"
+                        href={config.resume}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        disableGutters
+                        sx={{px: 1, py: 0.75, gap: 1}}
+                    >
+                        <DescriptionIcon fontSize="small" />
+                        Resume
+                    </MenuItem>
+                )}
+            </Menu>
+        </>
     );
 }
