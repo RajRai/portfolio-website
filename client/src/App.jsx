@@ -10,15 +10,20 @@ import {
     CircularProgress,
     Container,
     Divider,
-    Grid,
+    IconButton,
     Link,
     Stack,
     TextField,
     Toolbar,
+    Tooltip,
     Typography,
 } from "@mui/material";
 
-import {projects} from "./projects";
+import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import DescriptionIcon from "@mui/icons-material/Description";
+
+import {config, projects} from "./config";
 import {fetchNotes, submitNote} from "./api";
 import {NewThemeButton, ThemeSelector} from "@rajrai/mui-theme-manager";
 
@@ -118,9 +123,54 @@ export default function App() {
                         <Box sx={{flex: 1}}>
                         </Box>
 
-                        <Stack direction="row" spacing={1}>
-                            <ThemeSelector id="topbar"/>
-                            <NewThemeButton/>
+                        <Stack direction="row" spacing={0.5} alignItems="center">
+                            {!!config.linkedin && (
+                                <Tooltip title="LinkedIn">
+                                    <IconButton
+                                        component="a"
+                                        href={config.linkedin}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        color="inherit"
+                                        aria-label="Open LinkedIn profile"
+                                    >
+                                        <LinkedInIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+
+                            {!!config.github && (
+                                <Tooltip title="GitHub">
+                                    <IconButton
+                                        component="a"
+                                        href={config.github}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        color="inherit"
+                                        aria-label="Open GitHub profile"
+                                    >
+                                        <GitHubIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+
+                            {!!config.resume && (
+                                <Tooltip title="Resume">
+                                    <IconButton
+                                        component="a"
+                                        href={config.resume}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        color="inherit"
+                                        aria-label="Open resume PDF"
+                                    >
+                                        <DescriptionIcon />
+                                    </IconButton>
+                                </Tooltip>
+                            )}
+
+                            <ThemeSelector id="topbar" />
+                            <NewThemeButton />
                         </Stack>
                     </Container>
                 </Toolbar>
