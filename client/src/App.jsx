@@ -107,10 +107,12 @@ export default function App() {
             <AppBar
                 position="sticky"
                 elevation={0}
+                color="default"
                 sx={{
                     backgroundColor: "background.paper",
                     borderBottom: 1,
                     borderColor: "divider",
+                    color: "text.primary",
                 }}
             >
                 <Toolbar>
