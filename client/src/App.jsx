@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
     Alert,
     AppBar,
@@ -48,9 +48,31 @@ function formatRelative(iso) {
     return "Just now";
 }
 
-export default function App() {
-    const [query, setQuery] = useState("");
+const profileActions = [
+    {
+        key: "linkedin",
+        label: "LinkedIn",
+        href: config.linkedin,
+        Icon: LinkedInIcon,
+        ariaLabel: "Open LinkedIn profile",
+    },
+    {
+        key: "github",
+        label: "GitHub",
+        href: config.github,
+        Icon: GitHubIcon,
+        ariaLabel: "Open GitHub profile",
+    },
+    {
+        key: "resume",
+        label: "Resume",
+        href: config.resume,
+        Icon: DescriptionIcon,
+        ariaLabel: "Open resume PDF",
+    },
+].filter((action) => Boolean(action.href));
 
+export default function App() {
     const [notes, setNotes] = useState([]);
     const [notesBusy, setNotesBusy] = useState(false);
     const [notesError, setNotesError] = useState("");
@@ -61,14 +83,6 @@ export default function App() {
     const [submitBusy, setSubmitBusy] = useState(false);
     const [submitState, setSubmitState] = useState("");
     const [submitError, setSubmitError] = useState("");
-
-    const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase();
-        if (!q) return projects;
-        return projects.filter((p) =>
-            `${p.title} ${p.tagline} ${(p.tags || []).join(" ")}`.toLowerCase().includes(q)
-        );
-    }, [query]);
 
     useEffect(() => {
         setNotesBusy(true);
@@ -124,17 +138,41 @@ export default function App() {
                             gap: {xs: 1, sm: 2},
                         }}
                     >
-                        <TextField
-                            size="small"
-                            placeholder="Search projects…"
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
+                        <Box
                             sx={{
-                                width: {xs: "auto", sm: 300},
                                 flex: 1,
                                 minWidth: 0,
+                                display: "flex",
+                                alignItems: "center",
                             }}
-                        />
+                        >
+                            <Stack
+                                direction="row"
+                                spacing={0.5}
+                                useFlexGap
+                                sx={{
+                                    display: {xs: "flex", sm: "none"},
+                                    flexWrap: "wrap",
+                                    alignItems: "center",
+                                }}
+                            >
+                                {profileActions.map(({key, label, href, Icon, ariaLabel}) => (
+                                    <Tooltip key={key} title={label}>
+                                        <IconButton
+                                            color="inherit"
+                                            size="small"
+                                            component="a"
+                                            href={href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            aria-label={ariaLabel}
+                                        >
+                                            <Icon />
+                                        </IconButton>
+                                    </Tooltip>
+                                ))}
+                            </Stack>
+                        </Box>
 
                         <Stack
                             direction="row"
@@ -145,53 +183,21 @@ export default function App() {
                                 flexShrink: 0,
                             }}
                         >
-                            {!!config.linkedin && (
-                                <Tooltip title="LinkedIn">
+                            {profileActions.map(({key, label, href, Icon, ariaLabel}) => (
+                                <Tooltip key={key} title={label}>
                                     <IconButton
                                         sx={{display: {xs: "none", sm: "inline-flex"}}}
                                         component="a"
-                                        href={config.linkedin}
+                                        href={href}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         color="inherit"
-                                        aria-label="Open LinkedIn profile"
+                                        aria-label={ariaLabel}
                                     >
-                                        <LinkedInIcon />
+                                        <Icon />
                                     </IconButton>
                                 </Tooltip>
-                            )}
-
-                            {!!config.github && (
-                                <Tooltip title="GitHub">
-                                    <IconButton
-                                        sx={{display: {xs: "none", sm: "inline-flex"}}}
-                                        component="a"
-                                        href={config.github}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        color="inherit"
-                                        aria-label="Open GitHub profile"
-                                    >
-                                        <GitHubIcon />
-                                    </IconButton>
-                                </Tooltip>
-                            )}
-
-                            {!!config.resume && (
-                                <Tooltip title="Resume">
-                                    <IconButton
-                                        sx={{display: {xs: "none", sm: "inline-flex"}}}
-                                        component="a"
-                                        href={config.resume}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        color="inherit"
-                                        aria-label="Open resume PDF"
-                                    >
-                                        <DescriptionIcon />
-                                    </IconButton>
-                                </Tooltip>
-                            )}
+                            ))}
 
                             <Box sx={{display: {xs: "none", sm: "flex"}, alignItems: "center", gap: 0.5}}>
                                 <ThemeSelector id="topbar" />
@@ -225,7 +231,7 @@ export default function App() {
                             gridAutoFlow: "dense",
                         }}
                     >
-                        {filtered.map((p) => (
+                        {projects.map((p) => (
                             <Card
                                 key={p.id}
                                 variant="outlined"
@@ -425,45 +431,6 @@ function MobileMenu() {
                         }}
                     />
                 </MenuItem>
-                {!!config.linkedin && (
-                    <MenuItem
-                        component="a"
-                        href={config.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        disableGutters
-                        sx={{px: 1, py: 0.75, gap: 1}}
-                    >
-                        <LinkedInIcon fontSize="small" />
-                        LinkedIn
-                    </MenuItem>
-                )}
-                {!!config.github && (
-                    <MenuItem
-                        component="a"
-                        href={config.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        disableGutters
-                        sx={{px: 1, py: 0.75, gap: 1}}
-                    >
-                        <GitHubIcon fontSize="small" />
-                        GitHub
-                    </MenuItem>
-                )}
-                {!!config.resume && (
-                    <MenuItem
-                        component="a"
-                        href={config.resume}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        disableGutters
-                        sx={{px: 1, py: 0.75, gap: 1}}
-                    >
-                        <DescriptionIcon fontSize="small" />
-                        Resume
-                    </MenuItem>
-                )}
             </Menu>
         </>
     );
