@@ -6,10 +6,19 @@ export const config = {
 
 export const projects = [
     {
+        id: "etf-holdings-api",
+        title: "ETF Holdings API",
+        tagline: "ETF constituents data for traders.",
+        tags: ["React", "Node.js", "Finance"],
+        links: [
+            {label: "Visit", href: "https://etf-holdings.com"},
+        ],
+    },
+    {
         id: "statio",
         title: "StatIO",
         tagline: "Customizable infrastructure monitoring.",
-        tags: ["React", "Node.js", "Infrastructure", "Visualisation"],
+        tags: ["React", "Node.js", "Infrastructure", "Visualization"],
         links: [
             {label: "Visit", href: "https://statio.net"},
         ],
@@ -18,7 +27,7 @@ export const projects = [
         id: "portfolio-analyzer-client",
         title: "Portfolio Analyzer",
         tagline: "Interactive portfolio tracking and analytics for personal investing.",
-        tags: ["React", "Python", "Finance", "Visualisation"],
+        tags: ["React", "Python", "Finance", "Visualization"],
         links: [
             {label: "Visit", href: "https://portfolios.rajrai.net"},
             {label: "GitHub", href: "https://github.com/RajRai/portfolio-tracker"},
