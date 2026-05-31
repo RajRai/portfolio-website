@@ -1,7 +1,7 @@
 export const config = {
     linkedin: "https://www.linkedin.com/in/raj-rai-2b70a3140/",
     github: "https://github.com/RajRai",
-    resume: "/Raj_Rai_Resume.pdf",
+    resume: "/static/Raj_Rai_Resume.pdf",
 };
 
 export const projects = [
