@@ -27,6 +27,10 @@ export async function submitNote({name, message}) {
     return request("/notes", {method: "POST", body: {name, message}});
 }
 
+export async function fetchPostHogConfig() {
+    return request("/posthog/config");
+}
+
 /* ========= ADMIN ========= */
 
 export async function fetchAdminNotes({status = "pending", adminKey}) {

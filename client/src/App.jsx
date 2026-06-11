@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {
     Alert,
     AppBar,
@@ -20,6 +20,7 @@ import {
     Tooltip,
     Typography,
 } from "@mui/material";
+import {usePostHog} from "@posthog/react";
 
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import GitHubIcon from "@mui/icons-material/GitHub";
@@ -72,7 +73,18 @@ const profileActions = [
     },
 ].filter((action) => Boolean(action.href));
 
+function getDestinationHost(href) {
+    try {
+        return new URL(href, window.location.origin).host;
+    } catch {
+        return "";
+    }
+}
+
 export default function App() {
+    const posthog = usePostHog();
+    const hasLoadedNotesRef = useRef(false);
+
     const [notes, setNotes] = useState([]);
     const [notesBusy, setNotesBusy] = useState(false);
     const [notesError, setNotesError] = useState("");
@@ -85,39 +97,92 @@ export default function App() {
     const [submitError, setSubmitError] = useState("");
 
     useEffect(() => {
+        if (hasLoadedNotesRef.current) return;
+        hasLoadedNotesRef.current = true;
+
         setNotesBusy(true);
         fetchNotes()
-            .then((data) => setNotes(data.notes || []))
-            .catch((e) => setNotesError(e?.message || "Failed to load notes"))
+            .then((data) => {
+                const loadedNotes = data.notes || [];
+                setNotes(loadedNotes);
+                posthog.capture("notes_feed_loaded", {
+                    note_count: loadedNotes.length,
+                });
+            })
+            .catch((error) => {
+                const errorMessage = error?.message || "Failed to load notes";
+                setNotesError(errorMessage);
+                posthog.capture("notes_feed_failed", {
+                    reason: errorMessage,
+                });
+            })
             .finally(() => setNotesBusy(false));
-    }, []);
+    }, [posthog]);
 
     async function onSubmit(e) {
         e.preventDefault();
         setSubmitError("");
         setSubmitState("");
 
-        if (message.trim().length < 2) {
-            setSubmitError("Write a real note 🙂");
+        const trimmedName = name.trim();
+        const trimmedMessage = message.trim();
+        const analyticsProps = {
+            has_name: Boolean(trimmedName),
+            message_length: trimmedMessage.length,
+        };
+
+        posthog.capture("note_submit_attempted", analyticsProps);
+
+        if (trimmedMessage.length < 2) {
+            posthog.capture("note_submit_failed", {
+                ...analyticsProps,
+                reason: "message_too_short",
+            });
+            setSubmitError("Write a real note :)");
             return;
         }
 
         setSubmitBusy(true);
         try {
-            await submitNote({name: name.trim(), message: message.trim()});
-            setSubmitState("Thanks — your note will appear once approved.");
+            await submitNote({name: trimmedName, message: trimmedMessage});
+            posthog.capture("note_submit_succeeded", {
+                ...analyticsProps,
+                moderation_status: "pending",
+            });
+            setSubmitState("Thanks - your note will appear once approved.");
             setName("");
             setMessage("");
-        } catch (err) {
-            setSubmitError(err?.message || "Failed to submit");
+        } catch (error) {
+            const errorMessage = error?.message || "Failed to submit";
+            setSubmitError(errorMessage);
+            posthog.capture("note_submit_failed", {
+                ...analyticsProps,
+                reason: errorMessage,
+            });
         } finally {
             setSubmitBusy(false);
         }
     }
 
+    function handleProfileActionClick(action) {
+        posthog.capture("profile_link_clicked", {
+            action_key: action.key,
+            action_label: action.label,
+            destination_host: getDestinationHost(action.href),
+        });
+    }
+
+    function handleProjectLinkClick(project, link) {
+        posthog.capture("project_link_clicked", {
+            project_id: project.id,
+            project_title: project.title,
+            link_label: link.label,
+            destination_host: getDestinationHost(link.href),
+        });
+    }
+
     return (
         <Box sx={{minHeight: "100vh", display: "flex", flexDirection: "column"}}>
-            {/* Header */}
             <AppBar
                 position="sticky"
                 elevation={0}
@@ -156,18 +221,21 @@ export default function App() {
                                     alignItems: "center",
                                 }}
                             >
-                                {profileActions.map(({key, label, href, Icon, ariaLabel}) => (
-                                    <Tooltip key={key} title={label}>
+                                {profileActions.map((action) => (
+                                    <Tooltip key={action.key} title={action.label}>
                                         <IconButton
                                             color="inherit"
                                             size="small"
                                             component="a"
-                                            href={href}
+                                            href={action.href}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            aria-label={ariaLabel}
+                                            aria-label={action.ariaLabel}
+                                            data-ph-capture-attribute-profile-key={action.key}
+                                            data-ph-capture-attribute-profile-label={action.label}
+                                            onClick={() => handleProfileActionClick(action)}
                                         >
-                                            <Icon />
+                                            <action.Icon />
                                         </IconButton>
                                     </Tooltip>
                                 ))}
@@ -183,18 +251,21 @@ export default function App() {
                                 flexShrink: 0,
                             }}
                         >
-                            {profileActions.map(({key, label, href, Icon, ariaLabel}) => (
-                                <Tooltip key={key} title={label}>
+                            {profileActions.map((action) => (
+                                <Tooltip key={action.key} title={action.label}>
                                     <IconButton
                                         sx={{display: {xs: "none", sm: "inline-flex"}}}
                                         component="a"
-                                        href={href}
+                                        href={action.href}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         color="inherit"
-                                        aria-label={ariaLabel}
+                                        aria-label={action.ariaLabel}
+                                        data-ph-capture-attribute-profile-key={action.key}
+                                        data-ph-capture-attribute-profile-label={action.label}
+                                        onClick={() => handleProfileActionClick(action)}
                                     >
-                                        <Icon />
+                                        <action.Icon />
                                     </IconButton>
                                 </Tooltip>
                             ))}
@@ -212,9 +283,7 @@ export default function App() {
                 </Toolbar>
             </AppBar>
 
-            {/* Content */}
             <Container maxWidth="lg" sx={{py: 3, flex: 1}}>
-                {/* Projects */}
                 <Typography variant="overline" color="text.secondary">Projects</Typography>
 
                 <Box sx={{mt: 1}}>
@@ -231,9 +300,9 @@ export default function App() {
                             gridAutoFlow: "dense",
                         }}
                     >
-                        {projects.map((p) => (
+                        {projects.map((project) => (
                             <Card
-                                key={p.id}
+                                key={project.id}
                                 variant="outlined"
                                 sx={{
                                     display: "flex",
@@ -242,17 +311,17 @@ export default function App() {
                             >
                                 <CardContent sx={{flex: 1}}>
                                     <Typography variant="h6" fontWeight={750}>
-                                        {p.title}
+                                        {project.title}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" sx={{mt: 0.75}}>
-                                        {p.tagline}
+                                        {project.tagline}
                                     </Typography>
 
-                                    {!!(p.tags || []).length && (
+                                    {!!(project.tags || []).length && (
                                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{mt: 2}}>
-                                            {p.tags.map((t) => (
+                                            {project.tags.map((tag) => (
                                                 <Box
-                                                    key={t}
+                                                    key={tag}
                                                     component="span"
                                                     sx={{
                                                         px: 1,
@@ -264,26 +333,31 @@ export default function App() {
                                                         color: "text.secondary",
                                                     }}
                                                 >
-                                                    {t}
+                                                    {tag}
                                                 </Box>
                                             ))}
                                         </Stack>
                                     )}
                                 </CardContent>
 
-                                {!!(p.links || []).length && (
+                                {!!(project.links || []).length && (
                                     <CardActions sx={{px: 2, pb: 2}}>
                                         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                                            {p.links.map((l) => (
+                                            {project.links.map((link) => (
                                                 <Button
-                                                    key={l.href + l.label}
+                                                    key={link.href + link.label}
                                                     size="small"
                                                     variant="contained"
                                                     component="a"
-                                                    href={l.href}
+                                                    href={link.href}
                                                     target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    data-ph-capture-attribute-project-id={project.id}
+                                                    data-ph-capture-attribute-project-title={project.title}
+                                                    data-ph-capture-attribute-link-label={link.label}
+                                                    onClick={() => handleProjectLinkClick(project, link)}
                                                 >
-                                                    {l.label}
+                                                    {link.label}
                                                 </Button>
                                             ))}
                                         </Stack>
@@ -296,12 +370,17 @@ export default function App() {
 
                 <Divider sx={{my: 4}}/>
 
-                {/* Leave a note – FULL WIDTH */}
                 <Typography variant="overline" color="text.secondary">Leave a note</Typography>
 
                 <Card variant="outlined" sx={{mt: 1, mb: 3}}>
                     <CardContent>
-                        <Stack spacing={2} component="form" onSubmit={onSubmit}>
+                        <Stack
+                            spacing={2}
+                            component="form"
+                            onSubmit={onSubmit}
+                            data-ph-capture-attribute-form="public-note"
+                            data-ph-capture-attribute-surface="portfolio-home"
+                        >
                             <TextField
                                 label="Name (optional)"
                                 value={name}
@@ -321,22 +400,26 @@ export default function App() {
                             {submitState && <Alert severity="success">{submitState}</Alert>}
 
                             <Box sx={{display: "flex", justifyContent: "flex-end"}}>
-                                <Button type="submit" variant="contained" disabled={submitBusy}>
-                                    {submitBusy ? "Submitting…" : "Submit"}
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    disabled={submitBusy}
+                                    data-ph-capture-attribute-form="public-note"
+                                >
+                                    {submitBusy ? "Submitting..." : "Submit"}
                                 </Button>
                             </Box>
                         </Stack>
                     </CardContent>
                 </Card>
 
-                {/* Recent notes – FULL WIDTH BELOW */}
                 <Typography variant="overline" color="text.secondary">Recent notes</Typography>
 
                 <Stack spacing={2} sx={{mt: 1}}>
                     {notesBusy && (
                         <Stack direction="row" spacing={1} alignItems="center">
                             <CircularProgress size={18}/>
-                            <Typography variant="body2">Loading…</Typography>
+                            <Typography variant="body2">Loading...</Typography>
                         </Stack>
                     )}
 
@@ -346,17 +429,17 @@ export default function App() {
                         <Typography variant="body2" color="text.secondary">No notes yet.</Typography>
                     )}
 
-                    {notes.map((n) => (
-                        <Card key={n.id} variant="outlined">
+                    {notes.map((note) => (
+                        <Card key={note.id} variant="outlined">
                             <CardContent>
                                 <Typography variant="subtitle2" fontWeight={700}>
-                                    {n.name || "Anonymous"} •{" "}
+                                    {note.name || "Anonymous"}{" "}
                                     <Typography component="span" variant="caption" color="text.secondary">
-                                        {formatRelative(n.created_at)}
+                                        - {formatRelative(note.created_at)}
                                     </Typography>
                                 </Typography>
                                 <Typography variant="body2" sx={{mt: 1, whiteSpace: "pre-wrap"}}>
-                                    {n.message}
+                                    {note.message}
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -364,7 +447,6 @@ export default function App() {
                 </Stack>
             </Container>
 
-            {/* Footer */}
             <Box component="footer" sx={{borderTop: 1, borderColor: "divider", py: 2}}>
                 <Container maxWidth="lg">
                     <Typography variant="body2" color="text.secondary">

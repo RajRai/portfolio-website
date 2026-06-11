@@ -15,7 +15,9 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/lab": "^7.0.1-beta.20",
     "@mui/material": "^7.3.6",
+    "@posthog/react": "^1.10.1",
     "@rajrai/mui-theme-manager": "^1.1.8",
+    "posthog-js": "^1.386.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.11.0"

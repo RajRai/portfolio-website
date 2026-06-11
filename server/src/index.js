@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import {initDb} from "./db.js";
 
 import {router as notesRouter} from "./routes_notes.js";
+import {createPostHogProxy, getPostHogClientConfig, POSTHOG_PROXY_PATH} from "./posthog.js";
 
 
 dotenv.config();
@@ -22,17 +23,31 @@ app.use(helmet({
     contentSecurityPolicy: false, // easier for a portfolio site; tighten later if you want
 }));
 app.use(compression());
-app.use(express.json({limit: "1mb"}));
 
-// Dev CORS: allow Vite dev origin to call /api
+// Dev CORS: allow the Vite dev origin to call backend APIs and the PostHog proxy.
 if (process.env.NODE_ENV !== "production") {
     const origin = process.env.DEV_CLIENT_ORIGIN || "http://localhost:5173";
     app.use(cors({origin, credentials: false}));
 }
 
-app.get("/api/health", (req, res) => res.json({ok: true}));
+// Keep the PostHog proxy ahead of JSON parsing so request bodies stream through untouched.
+app.use(createPostHogProxy());
+app.use(express.json({limit: "1mb"}));
 
+app.get("/api/health", (req, res) => res.json({ok: true}));
+app.get("/api/posthog/config", (req, res) => res.json(getPostHogClientConfig()));
 app.use("/api", notesRouter);
+
+app.use((err, req, res, next) => {
+    const requestUrl = req.originalUrl || req.url || "";
+    if (!requestUrl.startsWith(POSTHOG_PROXY_PATH)) {
+        next(err);
+        return;
+    }
+
+    console.error("PostHog proxy error", err);
+    res.status(502).json({error: "PostHog proxy error"});
+});
 
 // Serve static client build in production
 const clientDist = path.resolve(path.join("..", "client", "dist"));
