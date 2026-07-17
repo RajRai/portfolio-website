@@ -9,16 +9,25 @@ export const projects = [
         id: "etf-holdings-api",
         title: "ETF Holdings API",
         tagline: "ETF constituents data for traders.",
-        tags: ["React", "Node.js", "Finance"],
+        tags: ["Next.js", "Finance"],
         links: [
             {label: "Visit", href: "https://etf-holdings.com"},
+        ],
+    },
+    {
+        id: "bmarker",
+        title: "BMarker",
+        tagline: "A consumerized version of my portfolio analyzer project.",
+        tags: ["Next.js", "Python", "Finance", "Visualization"],
+        links: [
+            {label: "Visit", href: "https://bmarker.com"},
         ],
     },
     {
         id: "statio",
         title: "StatIO",
         tagline: "Customizable infrastructure monitoring.",
-        tags: ["React", "Node.js", "Infrastructure", "Visualization"],
+        tags: ["Next.js", "Infrastructure", "Visualization"],
         links: [
             {label: "Visit", href: "https://statio.net"},
         ],
